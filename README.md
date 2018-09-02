@@ -50,6 +50,8 @@ sudo mount.redirfs '|logger --rfc5424 --sd-id redirfs@1 --sd-param dir=\"somethi
 
 You can use any command which works with sh, so even using pipes and so on will work.
 
-== Limitations ==
+Mounting just a single file is also possible, but only for redirecting the writes to a program.
 
-At the moment, it isn't possible to create subdirectories in a redirfs file system, its not yet possible to mount a single file.
+## Limitations
+
+At the moment, it isn't possible to create subdirectories in a redirfs file system.

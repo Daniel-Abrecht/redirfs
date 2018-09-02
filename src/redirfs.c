@@ -13,7 +13,9 @@
 #include <fuse.h>
 
 struct redirfs_options {
-  const char* target;
+  char* target;
+  char* mountpoint;
+  int mountpoint_mode;
 };
 
 static struct redirfs_options options;
@@ -23,7 +25,9 @@ static int opr_getattr(const char *path, struct stat *stbuf){
   stbuf->st_uid = getuid();
   stbuf->st_gid = getgid();
 
-  if(path[0] == '/' && path[1] == 0){
+  if( S_ISDIR(options.mountpoint_mode)
+   && path[0] == '/' && path[1] == 0
+  ){
     stbuf->st_mode = S_IFDIR | 0550;
     stbuf->st_nlink = 1;
   }else if(options.target[0] == '|'){
@@ -159,6 +163,15 @@ static int opt_proc(void *data, const char *arg, int key, struct fuse_args *outa
   if( key == FUSE_OPT_KEY_NONOPT && !options.target ){
     options.target = strdup(arg);
     return 0;
+  }else if(!options.mountpoint){
+    options.mountpoint = strdup(arg);
+    struct stat path_stat;
+    stat(arg, &path_stat);
+    options.mountpoint_mode = path_stat.st_mode;
+    if( S_ISREG(options.mountpoint_mode) && options.target[0] != '|' ){
+      puts("Error: Can't mount symlink over regular file, consider creating a symlink yourself with ln -s instead.");
+      exit(1);
+    }
   }
   return 1;
 }
