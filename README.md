@@ -12,12 +12,12 @@ will be set to the name of the opened file.
 
 Redirecting output to a file (in this case /dev/null):
 ```
-redirfs -o target=/dev/null mountpoint
+redirfs /dev/null mountpoint
 ```
 
 Redirecting output to a program (in this case logger, which sends them to the system logger):
 ```
-redirfs -o target='|logger' mountpoint
+redirfs '|logger' mountpoint
 ```
 
 You can also set any fuse option you want. For example, you may want to set

@@ -12,35 +12,11 @@
 #include <errno.h>
 #include <fuse.h>
 
-#define FORMAT_string "s"
-#define FORMAT_integer "i"
-
-typedef char* TYPE_string;
-typedef int TYPE_integer;
-
-#define REDIRFS_OPTIONS \
-  X(string, target, 0)
-
 struct redirfs_options {
-#define X(T,N,R) TYPE_ ## T N;
-  REDIRFS_OPTIONS
-#undef X
-};
-
-enum redirfs_option_indeces {
-#define X(T,N,R) opt_ ## N,
-  REDIRFS_OPTIONS
-#undef X
-  opt_count
+  const char* target;
 };
 
 static struct redirfs_options options;
-
-static struct fuse_opt redirfs_option_list[] = {
-#define X(T,N,R) { #N "=%" FORMAT_##T, offsetof(struct redirfs_options,N), R },
-  REDIRFS_OPTIONS
-#undef X
-};
 
 static int opr_getattr(const char *path, struct stat *stbuf){
   memset(stbuf, 0, sizeof(struct stat));
@@ -176,13 +152,19 @@ static struct fuse_operations operations = {
   .release = opr_close,
 };
 
+static int opt_proc(void *data, const char *arg, int key, struct fuse_args *outargs){
+  (void)data;
+  (void)key;
+  (void)outargs;
+  if( key == FUSE_OPT_KEY_NONOPT && !options.target ){
+    options.target = strdup(arg);
+    return 0;
+  }
+  return 1;
+}
+
 int main(int argc, char* argv[]){
   struct fuse_args args = FUSE_ARGS_INIT(argc, argv);
-  fuse_opt_parse(&args, &options, redirfs_option_list, 0);
-  if(!options.target){
-    fuse_opt_add_arg(&args, "-h");
-    fuse_main(args.argc, args.argv, (struct fuse_operations[]){{0}}, 0);
-    return 1;
-  }
+  fuse_opt_parse(&args, 0, 0, opt_proc);
   return fuse_main(args.argc, args.argv, &operations, 0);
 }
